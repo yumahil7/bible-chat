@@ -4,7 +4,7 @@ const refs=[...window.DAILY,...window.JESUS.demo.map(d=>d.ref),window.JESUS.def.
 window.MOODS.forEach(m=>{refs.push(...m.refs);if(m.j)refs.push(m.j)});window.STORY_DAVID.forEach(x=>x.ref&&refs.push(x.ref));
 Object.values(window.ALERT_VERSES).forEach(a=>refs.push(...a));
 {const C=eval('('+require('fs').readFileSync('context.js','utf8').match(/window.CTX=(\{.*?\}\});/s)[1]+')');Object.values(C).forEach(x=>refs.push(x.ref));}
-for(const f of ['jesus.js','context.js','alerts.js','moods.js','chars.js'])for(const m of require('fs').readFileSync(f,'utf8').matchAll(/"([가-힣]{1,3} \d+:\d+(?:-\d+)?)"/g))refs.push(m[1]);
+for(const f of ['pools.js','jesus.js','context.js','alerts.js','moods.js','chars.js'])for(const m of require('fs').readFileSync(f,'utf8').matchAll(/"([가-힣]{1,3} \d+:\d+(?:-\d+)?)"/g))refs.push(m[1]);
 let bad=0;for(const r of refs){const m=r.match(/^(\S+)\s*(\d+):(\d+)(?:-(\d+))?$/);const b=m&&SH[m[1]];const ok=m&&b!=null&&B[b].chs[m[2]-1]>=(+m[4]||+m[3]);
  for(const tr of['krv','kjv']){const d=ok&&JSON.parse(fs.readFileSync(`data/${tr}/${b}.json`))[m[2]-1][m[3]-1];if(!d){bad++;console.log('BAD',tr,r)}}
  if(ok&&process.argv[2])console.log(r,JSON.parse(fs.readFileSync(`data/krv/${b}.json`))[m[2]-1][m[3]-1].slice(0,50))}

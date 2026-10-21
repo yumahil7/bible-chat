@@ -33,7 +33,7 @@ const img=(id,ex,small=true)=>{if(id==='host')return`images/host-${ex}${small?'-
 const nid=n=>{const k=String(n).replace(/[\s()]/g,'');return Object.keys(window.PORTRAIT||{}).find(i=>(PORTRAIT[i].name||'').replace(/[\s()]/g,'')===k);};
 const pic=(id,ex,cls,name)=>`<img class="${cls||''}" src="${img(id,ex,/\b(av|cav)\b/.test(cls||''))}" onerror="this.outerHTML='<div class=\\'ph ${cls||''}\\'>${name?name[0]:'✝'}</div>'">`;
 function title(t,back){$('#title').textContent=t;$('#back').hidden=!back;}
-$('#back').onclick=()=>go('chars');document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.go));
+$('#back').onclick=()=>go(location.hash.startsWith('#help')?'home':'chars');document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.go));
 $('#setBtn').onclick=settings;
 
 async function daily(){const day=Math.floor((Date.now()+9*36e5)/864e5),J=day%2===1,ref=J?JESUS_DAILY[(day>>1)%JESUS_DAILY.length]:DAILY[(day>>1)%DAILY.length],v=await verse(ref),who=cameoWho(ref);
@@ -75,8 +75,12 @@ async function addMsg(h,scroll=true){const M=$('#msgs');const d=document.createE
  if(h.e&&cur&&cur.id!=='jesus'){const p=document.querySelector('.portrait');if(p&&p.tagName==='IMG')p.src=img(cur.id,h.e,false);}
  if(scroll)d.scrollIntoView({block:'end'});}
 
-function demoReply(t){const m=cur.demo.find(d=>d.k.some(k=>t.includes(k)))||cur.def;
- if(cur.id==='jesus')return{r:'c',t:'복음서는 예수님의 말씀을 이렇게 전합니다.',ref:m.ref};return{r:'c',t:m.t,ref:m.ref,e:m.e};}
+function demoReply(t){const hit=cur.demo.find(d=>d.k.some(k=>t.includes(k))),m=hit||cur.def;
+ if(cur.id==='jesus'){const mm=matchMood(t),pool=[m.ref,...((mm&&MOOD_JPOOL[mm.id])||[]),...(hit?[]:JESUS_DAILY)];return{r:'c',t:'복음서는 예수님의 말씀을 이렇게 전합니다.',ref:pickRefs('jesus_'+(mm?mm.id:'def'),pool,1)[0]||m.ref};}
+ const P=CHAR_POOL[cur.id]||[];let R={};try{R=JSON.parse(localStorage.getItem('recentRefs'))||{}}catch{}const key='c_'+cur.id,rec=(R[key]||[]).slice(-3);
+ if(m.ref&&!rec.includes(m.ref)&&(hit?Math.random()<0.6:Math.random()<0.3)){pickRefs(key,[m.ref],1);return{r:'c',t:m.t,ref:m.ref,e:m.e};}
+ const r=pickRefs(key,P.length?P:[m.ref],1,[])[0]||m.ref;const L=['이번엔 이 말씀을 나눠 드릴게요.','제 마음에 오래 남아 있는 말씀이에요.','지금 당신에게 이 말씀이 닿았으면 해요.','저도 이 말씀을 붙잡고 걸었어요.'];
+ return{r:'c',t:(hit?m.t.split(/[.?!]/)[0]+'. ':'')+L[Math.floor(Math.random()*L.length)],ref:r,e:m.e};}
 function llm(){const c=LS.get('llm',{});return c.key&&c.url?c:null;}
 async function reply(t,hist){const c=llm();if(!c||cur.id==='jesus')return demoReply(t);
  try{const sys=`${cur.sys}\n규칙: 1) 한국어로 2~4문장, 따뜻하게. 2) 성경 본문을 절대 직접 쓰거나 인용부호로 옮기지 마라. 3) 관련 구절의 참조만 refs에 1개 넣어라(형식 예: "삼상 17:45", 책 약어는 한국어 약어). 우선 범위: ${cur.scope.join(', ')}. 4) 새 교리·개인 예언·성경에 없는 사건을 사실처럼 말하지 마라. 5) 자해/위기 언급 시 롤플레이를 멈추고 자살예방상담전화 109를 안내하라. 6) 출력은 JSON만: {"reply":"...","refs":["..."],"emotion":"smile|worry|talk|flustered"}`;
@@ -111,9 +115,9 @@ async function home(){title('말씀톡 · 빛나와 함께');cur=null;const d=aw
  const send=async(t,m)=>{try{await send2(t,m);}catch(e){console.warn(e);bitnaExpr('flustered');$('#bstat').textContent='앗, 뭔가 꼬였어… 다시 한 번 말해 줄래?';}};
  const send2=async(t,m)=>{t=t.trim();if(!t)return;$('#q').value='';await push({who:'u',t});bitnaExpr('empathy');$('#bstat').textContent='음… 듣고 있어.';await new Promise(r=>setTimeout(r,500));m=m||matchMood(t);
   if(!m){await push({who:'host',e:'worry',t:'이야기해 줘서 고마워. 조금 더 자세히 말해 줄래? 위의 마음 버튼 중에서 골라도 좋아.'});return;}
-  const c=CHARS.find(x=>x.id===m.c);const pe=['thanks','joy'].includes(m.id)?'smile':'empathy';await push({who:'host',e:pe,t:m.h});await push({who:m.c,t:m.s,e:'talk',ref:m.refs[0]});
-  await push({who:'host',e:pe==='smile'?'smile':'talk',t:'이 말씀들도 같이 읽어 보자. 카드를 누르면 장 전체를 읽을 수 있어.',refs:m.refs.slice(1)});
-  if(m.j)await push({who:'jesus',t:'예수님께서 복음서에서 하신 말씀이에요.',ref:m.j});
+  const c=CHARS.find(x=>x.id===m.c);const pe=['thanks','joy'].includes(m.id)?'smile':'empathy';await push({who:'host',e:pe,t:m.h});const pool=[...m.refs,...(MOOD_POOL[m.id]||[])],pk=pickRefs('m_'+m.id,pool,3);await push({who:m.c,t:m.s,e:'talk',ref:pk[0]});
+  await push({who:'host',e:pe==='smile'?'smile':'talk',t:'이 말씀들도 같이 읽어 보자. 카드를 누르면 장 전체를 읽을 수 있어.',refs:pk.slice(1)});
+  const jp=[m.j,...(MOOD_JPOOL[m.id]||[])].filter(Boolean);if(jp.length)await push({who:'jesus',t:'예수님께서 복음서에서 하신 말씀이에요.',ref:pickRefs('j_'+m.id,jp,1)[0]});
   await push({who:'host',e:'smile',t:`${c.name}와(과) 1:1로 더 이야기하고 싶으면 인물 탭에서 대화할 수 있어. 오늘도 함께해 줘서 고마워 💛`});};
  $('#sd').onclick=()=>send($('#q').value);$('#q').onkeydown=e=>{if(e.key==='Enter')send(e.target.value);};
  V.querySelectorAll('#moods [data-m]').forEach(b=>b.onclick=()=>{const m=MOODS.find(x=>x.id===b.dataset.m);send(b.textContent.replace(/^\S+\s/,''),m);});
@@ -136,6 +140,6 @@ async function gMsg(h,scroll=true){const M=$('#msgs');if(!M)return;const w=docum
  if(scroll)w.scrollIntoView({block:'end'});}
 
 window.go=(v,a)=>{location.hash=v+(a?'/'+a:'');};
-function route(){closeSheet();const[v,a]=(location.hash.slice(1)||'home').split('/');window.scrollTo(0,0);({home,chars,saved,premium,help:()=>{title('함께 돕기');V.innerHTML=donateHTML(false)+disc();},chat:()=>chat(a)}[v]||home)();}
+function route(){closeSheet();const[v,a]=(location.hash.slice(1)||'home').split('/');window.scrollTo(0,0);({home,chars,saved,premium,help:()=>{title('함께 돕기',true);V.innerHTML=`<button class="btn homeb" onclick="go('home')">← 홈으로</button>`+donateHTML(false)+`<button class="btn homeb" onclick="go('home')">← 홈으로 돌아가기</button>`+disc();},chat:()=>chat(a)}[v]||home)();}
 (async()=>{BOOKS=await (await fetch('data/books.json')).json();BOOKS.forEach(b=>SH[b.sh]=b.i);window.addEventListener('hashchange',route);route();
  if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});})();
