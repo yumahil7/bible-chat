@@ -1,3 +1,7 @@
+images/host-smile.jpg
+images/host-worry.jpg
+images/host-talk.jpg
+images/host-flustered.jpg
 images/david-boy-smile.jpg
 images/david-boy-worry.jpg
 images/david-boy-talk.jpg
@@ -30,3 +34,15 @@ images/esther-smile.jpg
 images/esther-worry.jpg
 images/esther-talk.jpg
 images/esther-flustered.jpg
+images/elijah-smile.jpg
+images/elijah-worry.jpg
+images/elijah-talk.jpg
+images/elijah-flustered.jpg
+images/job-smile.jpg
+images/job-worry.jpg
+images/job-talk.jpg
+images/job-flustered.jpg
+images/paul-smile.jpg
+images/paul-worry.jpg
+images/paul-talk.jpg
+images/paul-flustered.jpg
