@@ -1,0 +1,3 @@
+{"_설명":"수동 재난 알림. active:true 인 항목만 표시. 예시는 비활성.","alerts":[
+ {"id":"manual-example","active":false,"type":"EQ","title":"예시: ○○ 지역 지진","body":"피해 지역을 위해 함께 기도해요.","source":"수동 등록","url":"","date":"2026-10-21"}
+]}

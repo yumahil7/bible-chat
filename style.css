@@ -27,3 +27,4 @@ main{padding:12px 12px 90px}nav{position:fixed;bottom:0;left:50%;transform:trans
 @keyframes shimmer{0%,100%{background-position:120% 0}50%{background-position:-20% 0}}
 @keyframes dot{0%,100%{opacity:.3}50%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.bwrap,.bwrap.talking,.shine,.typing i{animation:none!important}}
+.alertb{background:#eef4ff;border:1px solid #c9d8f5;border-radius:12px;padding:8px 12px;margin-bottom:8px;font-size:14px}.ah{cursor:pointer}.pray{line-height:1.6;font-size:14px;background:#fff;border-radius:10px;padding:8px}
