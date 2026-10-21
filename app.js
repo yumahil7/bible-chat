@@ -21,7 +21,7 @@ async function openChapter(ref){const p=parseRef(ref),tr=LS.get('tr','krv'),bk=a
  sheet(`<h3>${BOOKS[p.b].ko} ${p.c}장 <small class="note">${TR[tr]}</small></h3>
  <button class="btn g" id="sv">🔖 저장</button><button class="btn" id="sh">공유</button><button class="btn" onclick="closeSheet()">닫기</button>
  <p class="note">📜 ${ATTR[tr]}</p><div class="cv">${ch.map((t,i)=>`<p id="v${i+1}" class="${i+1>=p.v1&&i+1<=p.v2?'hl':''}"><sup>${i+1}</sup>${esc(t)}</p>`).join('')}</div>`);
- $('#v'+p.v1).scrollIntoView({block:'center'});
+ $('#v'+p.v1).scrollIntoView({block:'center'});if(window.cameo)cameo(ref);
  $('#sv').onclick=()=>{const s=LS.get('saved',[]);if(!s.includes(ref)){s.unshift(ref);LS.set('saved',s);}$('#sv').textContent='✔ 저장됨';};
  $('#sh').onclick=()=>share(v);}
 async function share(v){const t=`${v.text}\n— ${v.ref} (${v.tr})\n#말씀톡`;try{if(navigator.share)await navigator.share({text:t});else{await navigator.clipboard.writeText(t);alert('복사했어요');}}catch{}}
@@ -29,21 +29,22 @@ function sheet(h){$('#sheet').innerHTML=`<div class="in">${h}</div>`;$('#sheet')
 window.closeSheet=()=>{$('#sheet').hidden=true;};$('#sheet').onclick=e=>{if(e.target.id==='sheet')closeSheet();};
 
 // ---- 화면 ----
-const img=(id,ex)=>id==='host'?`images/host-${ex}-sm.webp`:`images/${id}-${ex}.jpg`;
-const pic=(id,ex,cls,name)=>`<img class="${cls||''}" src="${img(id,ex)}" onerror="this.outerHTML='<div class=\\'ph ${cls||''}\\'>${name?name[0]:'✝'}</div>'">`;
+const img=(id,ex,small=true)=>{if(id==='host')return`images/host-${ex}${small?'-sm':''}.webp`;const P=window.PORTRAIT&&PORTRAIT[id];if(P)return`images/c/${P.expr&&id!=='jesus'?id+'-'+ex:id}${small?'-sm':''}.webp`;return`images/${id}-${ex}.jpg`;};
+const nid=n=>{const k=String(n).replace(/[\s()]/g,'');return Object.keys(window.PORTRAIT||{}).find(i=>(PORTRAIT[i].name||'').replace(/[\s()]/g,'')===k);};
+const pic=(id,ex,cls,name)=>`<img class="${cls||''}" src="${img(id,ex,/\b(av|cav)\b/.test(cls||''))}" onerror="this.outerHTML='<div class=\\'ph ${cls||''}\\'>${name?name[0]:'✝'}</div>'">`;
 function title(t,back){$('#title').textContent=t;$('#back').hidden=!back;}
 $('#back').onclick=()=>go('chars');document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.go));
 $('#setBtn').onclick=settings;
 
-async function daily(){const day=Math.floor((Date.now()+9*36e5)/864e5),ref=DAILY[day%DAILY.length],v=await verse(ref);
- return{html:`<div class="card"><b>☀ 오늘의 말씀</b>${verseCard(v)}<button class="btn g" id="dsv">🔖 저장</button><button class="btn" id="dsh">공유</button></div>
+async function daily(){const day=Math.floor((Date.now()+9*36e5)/864e5),J=day%2===1,ref=J?JESUS_DAILY[(day>>1)%JESUS_DAILY.length]:DAILY[(day>>1)%DAILY.length],v=await verse(ref),who=cameoWho(ref);
+ return{html:`<div class="card"><div class="dtop">${who?pic(who.id,'smile','av'+(who.id==='jesus'?' reverent':''),'?'):pic('host','smile','av','빛')}<div><b>☀ 오늘의 말씀</b>${J?' <span class="note">· 복음서가 전하는 예수님의 말씀</span>':''}</div></div>${verseCard(v)}<button class="btn g" id="dsv">🔖 저장</button><button class="btn" id="dsh">공유</button></div>
  <div class="card"><b>✝ ${JESUS.name}</b><p class="note">${JESUS.intro}</p><button class="btn" onclick="go('chat','jesus')">말씀 듣기</button></div>
  <div class="card"><b>🎬 쇼츠 「성경, 개봉박두」 ep1 다윗과 골리앗</b><p class="note">쇼츠에서 본 다윗과 직접 이야기해 보세요.</p><button class="btn" onclick="go('chat','david-boy')">다윗과 대화하기</button></div>`,bind(){$('#dsv').onclick=()=>{const s=LS.get('saved',[]);if(!s.includes(ref))s.unshift(ref);LS.set('saved',s);$('#dsv').textContent='✔ 저장됨';};$('#dsh').onclick=()=>share(v);}};}
 const cc=c=>`<div class="ch" onclick="go('chat','${c.id}')">${pic(c.id,'smile','',c.name)}<div class="n">${c.name}<small>${c.age} · ${c.tags.join(' ')}</small></div></div>`;
 const disc=()=>`<p class="note">⚠ AI가 만든 대화입니다. 성경 본문은 번역본 원문을 그대로 표시하며, 신앙 상담은 섬기는 교회 목회자와 함께하세요.</p>${attrAll}`;
 async function chars(){title('인물');const prem=LS.get('premium',false);const d=await daily();
  V.innerHTML=d.html+`<h3>무료</h3><div class="grid">${CHARS.map(cc).join('')}</div><h3>프리미엄 ${prem?'(체험 중)':'🔒'}</h3>
- <div class="grid">${LOCKED.map(n=>`<div class="ch" onclick="${prem?"alert('프로토타입: 대화 데이터 준비 중인 인물입니다')":"go('premium')"}"><div class="ph">${n[0]}</div>${prem?'':'<span class="lock">🔒</span>'}<div class="n">${n}</div></div>`).join('')}</div>${disc()}`;d.bind();}
+ <div class="grid">${LOCKED.map(n=>`<div class="ch" onclick="${prem?"alert('프로토타입: 대화 데이터 준비 중인 인물입니다')":"go('premium')"}">${nid(n)?pic(nid(n),'smile','',n):`<div class="ph">${n[0]}</div>`}${prem?'':'<span class="lock">🔒</span>'}<div class="n">${n}</div></div>`).join('')}</div>${disc()}`;d.bind();}
 async function saved(){title('내 말씀함');const s=LS.get('saved',[]);let h='';for(const r of s){const v=await verse(r);if(v)h+=`<div class="card">${verseCard(v)}<button class="btn" data-del="${esc(r)}">삭제</button></div>`;}
  V.innerHTML=h||'<p class="note">아직 저장한 말씀이 없어요. 구절 카드를 눌러 장 전체를 열고 🔖 저장하세요.</p>';
  V.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{LS.set('saved',s.filter(x=>x!==b.dataset.del));saved();});}
@@ -59,7 +60,7 @@ function premium(){title('프리미엄');const p=LS.get('premium',false);
 let cur=null;
 function chat(id){const J=id==='jesus';cur=J?JESUS:CHARS.find(c=>c.id===id);title(J?JESUS.name:cur.name,true);
  const hist=LS.get('h_'+id,[]);
- V.innerHTML=`<div class="chatTop">${J?'<div class="ph portrait">✝</div>':pic(id,'talk','portrait',cur.name)}<div><b>${J?JESUS.name:cur.name}</b><div class="note">${J?JESUS.intro:cur.intro}</div><div class="note" id="mode">${llm()?'🤖 AI 모드':'🎭 데모 모드(오프라인)'}</div></div></div>
+ V.innerHTML=`<div class="chatTop">${J?pic('jesus','smile','portrait reverent','예'):pic(id,'talk','portrait',cur.name)}<div><b>${J?JESUS.name:cur.name}</b><div class="note">${J?JESUS.intro:cur.intro}</div><div class="note" id="mode">${llm()?'🤖 AI 모드':'🎭 데모 모드(오프라인)'}</div></div></div>
  <div class="msgs" id="msgs"></div><div class="chips">${(J?['너무 지쳤어요','내일이 걱정돼요','두려워요']:['두려워요','실패했어요','혼자인 것 같아요','기도가 힘들어요']).map(x=>`<button>${x}</button>`).join('')}</div>${disc()}
  <div class="inp"><input id="q" placeholder="메시지를 입력하세요"><button id="sd">보내기</button></div>`;
  const M=$('#msgs');if(!hist.length)hist.push({r:'c',t:J?'복음서에 기록된 예수님의 말씀을 그대로 전해 드립니다. 마음을 나눠 주세요.':cur.greet});
@@ -71,7 +72,7 @@ function chat(id){const J=id==='jesus';cur=J?JESUS:CHARS.find(c=>c.id===id);titl
  V.querySelectorAll('.chips button').forEach(b=>b.onclick=()=>send(b.textContent));}
 async function addMsg(h,scroll=true){const M=$('#msgs');const d=document.createElement('div');d.className='m '+h.r;d.textContent=h.t;M.appendChild(d);
  if(h.ref){const v=await verse(h.ref);if(v)d.insertAdjacentHTML('beforeend',verseCard(v));}
- if(h.e&&cur&&cur.id!=='jesus'){const p=document.querySelector('.portrait');if(p&&p.tagName==='IMG')p.src=img(cur.id,h.e);}
+ if(h.e&&cur&&cur.id!=='jesus'){const p=document.querySelector('.portrait');if(p&&p.tagName==='IMG')p.src=img(cur.id,h.e,false);}
  if(scroll)d.scrollIntoView({block:'end'});}
 
 function demoReply(t){const m=cur.demo.find(d=>d.k.some(k=>t.includes(k)))||cur.def;
@@ -101,7 +102,7 @@ const nameOf=id=>id==='host'?HOST.name:id==='jesus'?'예수님':id==='u'?'나':(
 function matchMood(t){let best=null,bs=0;for(const m of MOODS){const sc=m.k.filter(k=>t.includes(k)).length;if(sc>bs){bs=sc;best=m;}}return best;}
 async function home(){title('말씀톡 · 빛나와 함께');cur=null;const d=await daily();
  V.innerHTML=`<div id="alertbox"></div><div id="ctxbox"></div><div class="bitna"><div class="bwrap"><img id="bimg" src="images/host-smile.webp" alt="빛나"><div class="shine"></div></div><div class="btxt"><b>빛나</b> <span class="note">${HOST.intro}</span><div class="bsay" id="bstat">지금 마음이 어때? 한 줄로 적어 줘 🙂</div></div></div>
- <div class="chips" id="moods">${MOODS.map(m=>`<button data-m="${m.id}">${m.label}</button>`).join('')}<button id="story">🎬 이야기 극장: 다윗과 골리앗</button><button id="clr">🧹 새 대화</button><button onclick="go('help')">🤝 함께 돕기</button></div>
+ <div class="chips" id="moods">${MOODS.map(m=>`<button data-m="${m.id}">${m.label}</button>`).join('')}<button id="story">🎬 이야기 극장: 다윗과 골리앗</button><button id="clr">🧹 새 대화</button><button onclick="go('help')">🤝 함께 돕기</button><button onclick="go('chat','jesus')">✝ 예수님 말씀 듣기</button></div>
  <div class="msgs" id="msgs"></div>${d.html}${disc()}
  <div class="inp"><input id="q" placeholder="예: 요즘 너무 지쳤어요"><button id="sd">보내기</button></div>`;d.bind();
  bitnaStart();alertBanner($('#alertbox')).then(shown=>{if(shown&&!location.search.includes('ctx='))window.onAlertClosed=()=>contextBanner($('#ctxbox'));else contextBanner($('#ctxbox'));});const hist=LS.get('h_group',[]);if(!hist.length)hist.push({who:'host',e:'smile',t:'안녕! 나는 빛나야 🙂 오늘 하루는 어땠어? 지금 마음을 편하게 적어 줘. 위의 버튼을 눌러도 돼.'});
@@ -129,7 +130,7 @@ async function bitnaTalk(t){const st=$('#bstat');if(st)st.innerHTML='<span class
  BT.talking=true;$('.bwrap')?.classList.add('talking');let f=0;const iv=setInterval(()=>bsrc(++f%2?'talk':'base'),140);
  await new Promise(r=>setTimeout(r,ms));clearInterval(iv);BT.talking=false;$('.bwrap')?.classList.remove('talking');bsrc(BT.expr);if(st)st.textContent=t.length>60?t.slice(0,60)+'…':t;}
 async function gMsg(h,scroll=true){const M=$('#msgs');if(!M)return;const w=document.createElement('div');w.className='g '+(h.who==='u'?'gu':'');
- if(h.who!=='u')w.innerHTML=(h.who==='jesus'?'<div class="ph av">✝</div>':pic(h.who,h.e||'smile','av',nameOf(h.who)))+`<div class="gb"><div class="gn">${esc(nameOf(h.who))}</div><div class="m c"></div></div>`;
+ if(h.who!=='u')w.innerHTML=(h.who==='jesus'?pic('jesus','smile','av reverent','예'):pic(h.who,h.e||'smile','av'+(h.who!=='host'?' big':''),nameOf(h.who)))+`<div class="gb"><div class="gn">${esc(nameOf(h.who))}</div><div class="m c"></div></div>`;
  else w.innerHTML='<div class="m u"></div>';M.appendChild(w);const d=w.querySelector('.m');d.textContent=h.t;
  for(const r of [h.ref,...(h.refs||[])].filter(Boolean)){const v=await verse(r);if(v)d.insertAdjacentHTML('beforeend',verseCard(v));}
  if(scroll)w.scrollIntoView({block:'end'});}

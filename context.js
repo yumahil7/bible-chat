@@ -17,7 +17,7 @@ function ctxTriggers(w,now=new Date()){const t=[],c=w?.weather_code,T=w?.tempera
  if(w){if([2,3,45,48,71,73,75,77,85,86].includes(c))t.push('cloudy');else if([0,1].includes(c))t.push('clear');}return t;}
 async function contextBanner(el){if(!el)return;let w=null;try{w=await ctxWeather();}catch{}
  const force=new URLSearchParams(location.search).get('ctx');const seen=JSON.parse(sessionStorage.getItem('ctx_seen')||'[]');
- const k=force&&CTX[force]?force:ctxTriggers(w).find(x=>!seen.includes(x));if(!k)return;const x=CTX[k],ch=CHARS.find(c=>c.id===x.c),v=await verse(x.ref);
+ const k=force&&CTX[force]?force:ctxTriggers(w).find(x=>!seen.includes(x));if(!k)return;const x=CTX[k],ch=CHARS.find(c=>c.id===x.c),v=await verse(x.ref),jv=await verse(CTX_JESUS[k]);
  const wx=w?` · ${w.where} ${Math.round(w.temperature_2m)}℃`:'';
- el.innerHTML=`<div class="ctxb"><button class="cx" id="cx" aria-label="닫기">✕</button><div class="ctop">${pic(ch.id,'smile','av',ch.name)}<div><span class="note">${x.label}${wx}</span><br><b>${ch.name}</b> ${esc(x.t)}</div></div>${v?verseCard(v):''}<p class="pray">🙏 ${esc(x.p)} 아멘.</p></div>`;
+ el.innerHTML=`<div class="ctxb"><button class="cx" id="cx" aria-label="닫기">✕</button><div class="ctop">${pic(ch.id,'smile','av',ch.name)}<div><span class="note">${x.label}${wx}</span><br><b>${ch.name}</b> ${esc(x.t)}</div></div>${v?verseCard(v):''}<p class="pray">🙏 ${esc(x.p)} 아멘.</p><div class="jline">${pic("jesus","smile","av reverent","예")}<span class="note">복음서가 전하는 예수님의 말씀</span></div>${jv?verseCard(jv):""}</div>`;
  $('#cx').onclick=()=>{seen.push(k);sessionStorage.setItem('ctx_seen',JSON.stringify(seen));el.innerHTML='';};window.__ctx={k,w};}
