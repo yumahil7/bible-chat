@@ -1,0 +1,1 @@
+const C='mt-v1';self.addEventListener('fetch',e=>{e.respondWith(caches.open(C).then(c=>c.match(e.request).then(r=>r||fetch(e.request).then(n=>{if(n.ok&&e.request.method==='GET')c.put(e.request,n.clone());return n}))))});
