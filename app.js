@@ -100,11 +100,11 @@ function settings(){const c=LS.get('llm',{}),tr=LS.get('tr','krv');
 const nameOf=id=>id==='host'?HOST.name:id==='jesus'?'예수님':id==='u'?'나':(CHARS.find(c=>c.id===id)||{}).name;
 function matchMood(t){let best=null,bs=0;for(const m of MOODS){const sc=m.k.filter(k=>t.includes(k)).length;if(sc>bs){bs=sc;best=m;}}return best;}
 async function home(){title('말씀톡 · 빛나와 함께');cur=null;const d=await daily();
- V.innerHTML=`<div id="alertbox"></div><div class="bitna"><div class="bwrap"><img id="bimg" src="images/host-smile.webp" alt="빛나"><div class="shine"></div></div><div class="btxt"><b>빛나</b> <span class="note">${HOST.intro}</span><div class="bsay" id="bstat">지금 마음이 어때? 한 줄로 적어 줘 🙂</div></div></div>
+ V.innerHTML=`<div id="alertbox"></div><div id="ctxbox"></div><div class="bitna"><div class="bwrap"><img id="bimg" src="images/host-smile.webp" alt="빛나"><div class="shine"></div></div><div class="btxt"><b>빛나</b> <span class="note">${HOST.intro}</span><div class="bsay" id="bstat">지금 마음이 어때? 한 줄로 적어 줘 🙂</div></div></div>
  <div class="chips" id="moods">${MOODS.map(m=>`<button data-m="${m.id}">${m.label}</button>`).join('')}<button id="story">🎬 이야기 극장: 다윗과 골리앗</button><button id="clr">🧹 새 대화</button><button onclick="go('help')">🤝 함께 돕기</button></div>
  <div class="msgs" id="msgs"></div>${d.html}${disc()}
  <div class="inp"><input id="q" placeholder="예: 요즘 너무 지쳤어요"><button id="sd">보내기</button></div>`;d.bind();
- bitnaStart();alertBanner($('#alertbox'));const hist=LS.get('h_group',[]);if(!hist.length)hist.push({who:'host',e:'smile',t:'안녕! 나는 빛나야 🙂 오늘 하루는 어땠어? 지금 마음을 편하게 적어 줘. 위의 버튼을 눌러도 돼.'});
+ bitnaStart();alertBanner($('#alertbox')).then(shown=>{if(shown&&!location.search.includes('ctx='))window.onAlertClosed=()=>contextBanner($('#ctxbox'));else contextBanner($('#ctxbox'));});const hist=LS.get('h_group',[]);if(!hist.length)hist.push({who:'host',e:'smile',t:'안녕! 나는 빛나야 🙂 오늘 하루는 어땠어? 지금 마음을 편하게 적어 줘. 위의 버튼을 눌러도 돼.'});
  for(const h of hist)await gMsg(h,false);
  const push=async h=>{if(h.who==='host'){bitnaExpr(h.e||'smile');await bitnaTalk(h.t);}hist.push(h);LS.set('h_group',hist.slice(-60));await gMsg(h);await new Promise(r=>setTimeout(r,250));};
  const send=async(t,m)=>{try{await send2(t,m);}catch(e){console.warn(e);bitnaExpr('flustered');$('#bstat').textContent='앗, 뭔가 꼬였어… 다시 한 번 말해 줄래?';}};

@@ -27,12 +27,12 @@ async function loadAlerts(){const feeds={manual:fManual,gdacs:fGDACS,usgs:fUSGS,
  const seen=new Map();for(const a of all){seen.set(a.id,a);}all=[...seen.values()];
  all=all.filter(a=>!(a.src==="gdacs"&&a.type==="EQ"&&all.some(u=>u.src.startsWith("usgs")&&Math.abs(Date.parse(u.date)-Date.parse(a.date))<864e5)));
  all.sort((x,y)=>(y.score||0)-(x.score||0)||Date.parse(y.date)-Date.parse(x.date));return all;}
-async function alertBanner(el){const dis=LS.get('alert_dismiss',[]);let list;try{list=(await loadAlerts()).filter(a=>!dis.includes(a.id));}catch{return;}
- if(!list.length||!el)return;const a=list[0],refs=ALERT_VERSES[a.type]||ALERT_VERSES.default;const v=await verse(refs[0]);
+async function alertBanner(el){const dis=LS.get('alert_dismiss',[]);let list;try{list=(await loadAlerts()).filter(a=>!dis.includes(a.id));}catch{return false;}
+ if(!list.length||!el)return false;const a=list[0],refs=ALERT_VERSES[a.type]||ALERT_VERSES.default;const v=await verse(refs[0]);
  const pray=`하나님, ${a.title.replace(/ 규모.*$/,'')} 소식 앞에 마음을 모읍니다. 다친 이들과 가족을 잃은 이들을 위로하시고, 구조하는 손길에 힘을 더하시며, 갈 곳 잃은 이들에게 피난처가 되어 주세요. 예수님의 이름으로 기도합니다. 아멘.`;
  el.innerHTML=`<div class="alertb"><div class="ah" id="ah">🕊 함께 기도해요 · <b>${esc(a.title)}</b> <span class="note">▾</span></div>
  <div class="ab" id="ab" hidden><p class="note">${esc(a.source)} 공식 정보 기준 · ${new Date(a.date).toLocaleDateString('ko-KR')} · <a href="${esc(a.url)}" target="_blank" rel="noopener">자세히</a></p>
  ${v?verseCard(v):''}<p class="pray">🙏 ${pray}</p>
  ${list.length>1?`<details><summary class="note">다른 기도 제목 ${list.length-1}건</summary>${list.slice(1,6).map(x=>`<div class="note">· ${esc(x.title)} (${esc(x.source)})</div>`).join('')}</details>`:''}
  <a class="btn g" href="#help">🤝 함께 돕기</a> <button class="btn" id="adis">이 알림 닫기</button></div></div>`;
- $('#ah').onclick=()=>{$('#ab').hidden=!$('#ab').hidden;};$('#adis').onclick=()=>{dis.push(a.id);LS.set('alert_dismiss',dis);el.innerHTML='';};}
+ $('#ah').onclick=()=>{$('#ab').hidden=!$('#ab').hidden;};$('#adis').onclick=()=>{dis.push(a.id);LS.set('alert_dismiss',dis);el.innerHTML='';if(window.onAlertClosed)onAlertClosed();};return true;}
