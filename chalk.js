@@ -42,3 +42,16 @@ async function ckRun(tok){const box=document.getElementById('chalk');if(!box)ret
  ckPlay(CK.i+1);}
 async function ckWrite(T,text,tok){if(RM){T.textContent=text;return;}
  for(const ch of [...text]){const sp=document.createElement('span');sp.textContent=ch;T.appendChild(sp);await ckWait(ch===' '?20:42,tok);}}
+// ---- 앱 전체 미니 칠판: 모든 구절 카드를 칠판으로 (쓰기·지우기, 예수님 말씀은 금색 분필) ----
+const isJesusRef=r=>!!(window.JESUS_SAY&&JESUS_SAY.has(r));
+window.boardHTML=(v,cls='')=>`<div class="mboard ${cls}${isJesusRef(v.short)?' gold':''}" data-ref="${esc(v.short)}" data-text="${esc(v.text)}" data-label="${esc('— '+v.ref+' ('+v.tr+')')}"><div class="mbt"></div><div class="mbr"></div><div class="eraser"></div></div>`;
+async function mbWrite(el,gen){const T=el.querySelector('.mbt'),R=el.querySelector('.mbr'),txt=el.dataset.text||'';T.innerHTML='';R.textContent='';R.classList.remove('show');
+ if(RM){T.textContent=txt;}else for(const ch of [...txt]){if(gen!==window.ROUTE_GEN||!el.isConnected)return;const s=document.createElement('span');s.textContent=ch;T.appendChild(s);await ckSleep(ch===' '?12:30);}
+ R.textContent=el.dataset.label||'';R.classList.add('show');}
+// 같은 칠판에 새 구절: 지우고 다시 쓰기
+window.boardShow=async function(el,v){if(!el||!v)return;const gen=window.ROUTE_GEN;
+ if(el.dataset.text&&!RM){const E=el.querySelector('.eraser');el.querySelectorAll('.mbt,.mbr').forEach(x=>x.classList.add('erasing'));E.classList.add('go');await ckSleep(1350);if(gen!==window.ROUTE_GEN)return;E.classList.remove('go');el.querySelectorAll('.mbt,.mbr').forEach(x=>x.classList.remove('erasing'));}
+ el.dataset.ref=v.short;el.dataset.text=v.text;el.dataset.label='— '+v.ref+' ('+v.tr+')';el.classList.toggle('gold',isJesusRef(v.short));await mbWrite(el,gen);};
+new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes){if(n.nodeType!==1)continue;
+ const L=n.matches?.('.mboard')?[n]:[...(n.querySelectorAll?.('.mboard')||[])];for(const b of L){if(b.dataset.manual||b.classList.contains('w'))continue;b.classList.add('w');mbWrite(b,window.ROUTE_GEN);}}}).observe(document.body,{childList:true,subtree:true});
+document.addEventListener('click',e=>{const d=e.target.closest('.mboard');if(d&&d.dataset.ref&&!e.target.closest('#chalk'))openChapter(d.dataset.ref);});

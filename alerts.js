@@ -30,7 +30,7 @@ async function loadAlerts(){const feeds={manual:fManual,gdacs:fGDACS,usgs:fUSGS,
 async function alertBanner(el){const dis=LS.get('alert_dismiss',[]);let list;try{list=(await loadAlerts()).filter(a=>!dis.includes(a.id));}catch{return false;}
  if(!list.length||!el)return false;const a=list[0],refs=ALERT_VERSES[a.type]||ALERT_VERSES.default;const v=await verse(refs[0]),jv=await verse(DISASTER_JESUS);
  const pray=`하나님, ${a.title.replace(/ 규모.*$/,'')} 소식 앞에 마음을 모읍니다. 다친 이들과 가족을 잃은 이들을 위로하시고, 구조하는 손길에 힘을 더하시며, 갈 곳 잃은 이들에게 피난처가 되어 주세요. 예수님의 이름으로 기도합니다. 아멘.`;
- el.innerHTML=`<div class="alertb"><div class="ah" id="ah">🕊 함께 기도해요 · <b>${esc(a.title)}</b> <span class="note">▾</span></div>
+ if(!el.isConnected)return false;el.innerHTML=`<div class="alertb"><div class="ah" id="ah">🕊 함께 기도해요 · <b>${esc(a.title)}</b> <span class="note">▾</span></div>
  <div class="ab" id="ab" hidden><p class="note">${esc(a.source)} 공식 정보 기준 · ${new Date(a.date).toLocaleDateString('ko-KR')} · <a href="${esc(a.url)}" target="_blank" rel="noopener">자세히</a></p>
  ${v?verseCard(v):''}<p class="pray">🙏 ${pray}</p><div class="jline">${pic("jesus","smile","av reverent","예")}<span class="note">복음서가 전하는 예수님의 말씀</span></div>${jv?verseCard(jv):""}
  ${list.length>1?`<details><summary class="note">다른 기도 제목 ${list.length-1}건</summary>${list.slice(1,6).map(x=>`<div class="note">· ${esc(x.title)} (${esc(x.source)})</div>`).join('')}</details>`:''}
