@@ -59,7 +59,7 @@ function premium(){title('프리미엄');const p=LS.get('premium',false);
 // ---- 채팅 ----
 let cur=null;
 function chat(id){const J=id==='jesus';cur=J?JESUS:CHARS.find(c=>c.id===id);title(J?JESUS.name:cur.name,true);
- const hist=LS.get('h_'+id,[]);
+ const hist=[],G=window.ROUTE_GEN;
  V.innerHTML=`<div class="chatTop">${J?pic('jesus','smile','portrait reverent','예'):pic(id,'talk','portrait',cur.name)}<div><b>${J?JESUS.name:cur.name}</b><div class="note">${J?JESUS.intro:cur.intro}</div><div class="note" id="mode">${llm()?'🤖 AI 모드':'🎭 데모 모드(오프라인)'}</div></div></div>
  <div class="msgs" id="msgs"></div><div class="chips">${(J?['너무 지쳤어요','내일이 걱정돼요','두려워요']:['두려워요','실패했어요','혼자인 것 같아요','기도가 힘들어요']).map(x=>`<button>${x}</button>`).join('')}</div>${disc()}
  <div class="inp"><input id="q" placeholder="메시지를 입력하세요"><button id="sd">보내기</button></div>`;
@@ -67,7 +67,7 @@ function chat(id){const J=id==='jesus';cur=J?JESUS:CHARS.find(c=>c.id===id);titl
  hist.forEach(h=>addMsg(h,false));
  const send=async t=>{t=t.trim();if(!t)return;$('#q').value='';const u={r:'u',t};hist.push(u);addMsg(u);
   if(!LS.get('premium',false)){const k='cnt_'+new Date().toDateString(),n=LS.get(k,0)+1;LS.set(k,n);if(n>20){addMsg({r:'c',t:'오늘 무료 대화 20회를 모두 사용했어요. (모의) 프리미엄에서 계속할 수 있어요.'});return;}}
-  const rep=await reply(t,hist);hist.push(rep);LS.set('h_'+id,hist.slice(-40));addMsg(rep);};
+  const rep=await reply(t,hist);if(G!==window.ROUTE_GEN)return;hist.push(rep);addMsg(rep);};
  $('#sd').onclick=()=>send($('#q').value);$('#q').onkeydown=e=>{if(e.key==='Enter')send(e.target.value);};
  V.querySelectorAll('.chips button').forEach(b=>b.onclick=()=>send(b.textContent));}
 async function addMsg(h,scroll=true){const M=$('#msgs');const d=document.createElement('div');d.className='m '+h.r;d.textContent=h.t;M.appendChild(d);
@@ -122,7 +122,7 @@ async function home(){title('말씀톡');cur=null;const d=await daily();const to
   await say(['thanks','joy'].includes(m.id)?'smile':'empathy','칠판에 말씀을 써 볼게…');openChalk(m);};
  $('#sd').onclick=()=>pick($('#q').value.trim());$('#q').onkeydown=e=>{if(e.key==='Enter')pick(e.target.value.trim());};
  V.querySelectorAll('#moods [data-m]').forEach(b=>b.onclick=()=>pick('',MOODS.find(x=>x.id===b.dataset.m)));
- $('#story').onclick=async()=>{const M=$('#msgs');M.innerHTML='';M.scrollIntoView({block:'start'});try{for(const h of STORY_DAVID){if(h.who==='host'){bitnaExpr(h.e||'smile');await bitnaTalk(h.t);}await gMsg(h);await new Promise(r=>setTimeout(r,600));}}catch(e){console.warn(e);}};}
+ $('#story').onclick=async()=>{const M=$('#msgs');M.innerHTML='';M.scrollIntoView({block:'start'});try{const G=window.ROUTE_GEN;for(const h of STORY_DAVID){if(G!==window.ROUTE_GEN)return;if(h.who==='host'){bitnaExpr(h.e||'smile');await bitnaTalk(h.t);}await gMsg(h);await new Promise(r=>setTimeout(r,600));}}catch(e){console.warn(e);}};}
 // ---- 빛나 생동감: 표정·눈 깜빡임·말하기 ----
 const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;const BT={expr:'smile',talking:false,blinks:0,timer:null};window.__bitna=BT;
 ['base','smile','worry','talk','flustered','empathy','blink'].forEach(e=>{const i=new Image();i.src=`images/host-${e}.webp`;});
@@ -140,6 +140,7 @@ async function gMsg(h,scroll=true){const M=$('#msgs');if(!M)return;const w=docum
  if(scroll)w.scrollIntoView({block:'end'});}
 
 window.go=(v,a)=>{location.hash=v+(a?'/'+a:'');};
-function route(){closeSheet();if(window.closeChalk)closeChalk();document.querySelectorAll('.cameo').forEach(e=>e.remove());try{CQ.length=0;}catch{}const[v,a]=(location.hash.slice(1)||'home').split('/');window.scrollTo(0,0);({home,chars,saved,premium,help:()=>{title('함께 돕기',true);V.innerHTML=`<button class="btn homeb" onclick="go('home')">← 홈으로</button>`+donateHTML(false)+`<button class="btn homeb" onclick="go('home')">← 홈으로 돌아가기</button>`+disc();},chat:()=>chat(a)}[v]||home)();}
+function route(){window.ROUTE_GEN=(window.ROUTE_GEN||0)+1;clearTimeout(BT.timer);BT.talking=false;try{cBusy=false;}catch{}closeSheet();if(window.closeChalk)closeChalk();document.querySelectorAll('.cameo').forEach(e=>e.remove());try{CQ.length=0;}catch{}const[v,a]=(location.hash.slice(1)||'home').split('/');window.scrollTo(0,0);({home,chars,saved,premium,help:()=>{title('함께 돕기',true);V.innerHTML=`<button class="btn homeb" onclick="go('home')">← 홈으로</button>`+donateHTML(false)+`<button class="btn homeb" onclick="go('home')">← 홈으로 돌아가기</button>`+disc();},chat:()=>chat(a)}[v]||home)();}
+Object.keys(localStorage).filter(k=>k.startsWith('h_')).forEach(k=>localStorage.removeItem(k));
 (async()=>{BOOKS=await (await fetch('data/books.json')).json();BOOKS.forEach(b=>SH[b.sh]=b.i);window.addEventListener('hashchange',route);route();
  if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});})();
