@@ -1,7 +1,3 @@
-images/host-smile.jpg
-images/host-worry.jpg
-images/host-talk.jpg
-images/host-flustered.jpg
 images/david-boy-smile.jpg
 images/david-boy-worry.jpg
 images/david-boy-talk.jpg

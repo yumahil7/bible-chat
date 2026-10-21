@@ -29,7 +29,7 @@ function sheet(h){$('#sheet').innerHTML=`<div class="in">${h}</div>`;$('#sheet')
 window.closeSheet=()=>{$('#sheet').hidden=true;};$('#sheet').onclick=e=>{if(e.target.id==='sheet')closeSheet();};
 
 // ---- 화면 ----
-const img=(id,ex)=>`images/${id}-${ex}.jpg`;
+const img=(id,ex)=>id==='host'?`images/host-${ex}-sm.webp`:`images/${id}-${ex}.jpg`;
 const pic=(id,ex,cls,name)=>`<img class="${cls||''}" src="${img(id,ex)}" onerror="this.outerHTML='<div class=\\'ph ${cls||''}\\'>${name?name[0]:'✝'}</div>'">`;
 function title(t,back){$('#title').textContent=t;$('#back').hidden=!back;}
 $('#back').onclick=()=>go('chars');document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.go));
@@ -100,23 +100,34 @@ function settings(){const c=LS.get('llm',{}),tr=LS.get('tr','krv');
 const nameOf=id=>id==='host'?HOST.name:id==='jesus'?'예수님':id==='u'?'나':(CHARS.find(c=>c.id===id)||{}).name;
 function matchMood(t){let best=null,bs=0;for(const m of MOODS){const sc=m.k.filter(k=>t.includes(k)).length;if(sc>bs){bs=sc;best=m;}}return best;}
 async function home(){title('말씀톡 · 빛나와 함께');cur=null;const d=await daily();
- V.innerHTML=`<div class="chatTop">${pic('host','smile','portrait sm','빛나')}<div><b>빛나</b><div class="note">${HOST.intro}</div><div class="note">지금 마음이 어때? 한 줄로 적어 줘. 성경 속 친구들과 말씀으로 함께할게.</div></div></div>
+ V.innerHTML=`<div class="bitna"><div class="bwrap"><img id="bimg" src="images/host-smile.webp" alt="빛나"><div class="shine"></div></div><div class="btxt"><b>빛나</b> <span class="note">${HOST.intro}</span><div class="bsay" id="bstat">지금 마음이 어때? 한 줄로 적어 줘 🙂</div></div></div>
  <div class="chips" id="moods">${MOODS.map(m=>`<button data-m="${m.id}">${m.label}</button>`).join('')}<button id="story">🎬 이야기 극장: 다윗과 골리앗</button><button id="clr">🧹 새 대화</button></div>
  <div class="msgs" id="msgs"></div>${d.html}${disc()}
  <div class="inp"><input id="q" placeholder="예: 요즘 너무 지쳤어요"><button id="sd">보내기</button></div>`;d.bind();
- const hist=LS.get('h_group',[]);if(!hist.length)hist.push({who:'host',t:'안녕! 나는 빛나야 🙂 오늘 하루는 어땠어? 지금 마음을 편하게 적어 줘. 위의 버튼을 눌러도 돼.'});
+ bitnaStart();const hist=LS.get('h_group',[]);if(!hist.length)hist.push({who:'host',e:'smile',t:'안녕! 나는 빛나야 🙂 오늘 하루는 어땠어? 지금 마음을 편하게 적어 줘. 위의 버튼을 눌러도 돼.'});
  for(const h of hist)await gMsg(h,false);
- const push=async h=>{hist.push(h);LS.set('h_group',hist.slice(-60));await gMsg(h);await new Promise(r=>setTimeout(r,250));};
- const send=async(t,m)=>{t=t.trim();if(!t)return;$('#q').value='';await push({who:'u',t});m=m||matchMood(t);
-  if(!m){await push({who:'host',t:'이야기해 줘서 고마워. 조금 더 자세히 말해 줄래? 위의 마음 버튼 중에서 골라도 좋아.'});return;}
-  const c=CHARS.find(x=>x.id===m.c);await push({who:'host',t:m.h});await push({who:m.c,t:m.s,e:'talk',ref:m.refs[0]});
-  await push({who:'host',t:'이 말씀들도 같이 읽어 보자. 카드를 누르면 장 전체를 읽을 수 있어.',refs:m.refs.slice(1)});
+ const push=async h=>{if(h.who==='host'){bitnaExpr(h.e||'smile');await bitnaTalk(h.t);}hist.push(h);LS.set('h_group',hist.slice(-60));await gMsg(h);await new Promise(r=>setTimeout(r,250));};
+ const send=async(t,m)=>{try{await send2(t,m);}catch(e){console.warn(e);bitnaExpr('flustered');$('#bstat').textContent='앗, 뭔가 꼬였어… 다시 한 번 말해 줄래?';}};
+ const send2=async(t,m)=>{t=t.trim();if(!t)return;$('#q').value='';await push({who:'u',t});bitnaExpr('empathy');$('#bstat').textContent='음… 듣고 있어.';await new Promise(r=>setTimeout(r,500));m=m||matchMood(t);
+  if(!m){await push({who:'host',e:'worry',t:'이야기해 줘서 고마워. 조금 더 자세히 말해 줄래? 위의 마음 버튼 중에서 골라도 좋아.'});return;}
+  const c=CHARS.find(x=>x.id===m.c);const pe=['thanks','joy'].includes(m.id)?'smile':'empathy';await push({who:'host',e:pe,t:m.h});await push({who:m.c,t:m.s,e:'talk',ref:m.refs[0]});
+  await push({who:'host',e:pe==='smile'?'smile':'talk',t:'이 말씀들도 같이 읽어 보자. 카드를 누르면 장 전체를 읽을 수 있어.',refs:m.refs.slice(1)});
   if(m.j)await push({who:'jesus',t:'예수님께서 복음서에서 하신 말씀이에요.',ref:m.j});
-  await push({who:'host',t:`${c.name}와(과) 1:1로 더 이야기하고 싶으면 인물 탭에서 대화할 수 있어. 오늘도 함께해 줘서 고마워 💛`});};
+  await push({who:'host',e:'smile',t:`${c.name}와(과) 1:1로 더 이야기하고 싶으면 인물 탭에서 대화할 수 있어. 오늘도 함께해 줘서 고마워 💛`});};
  $('#sd').onclick=()=>send($('#q').value);$('#q').onkeydown=e=>{if(e.key==='Enter')send(e.target.value);};
  V.querySelectorAll('#moods [data-m]').forEach(b=>b.onclick=()=>{const m=MOODS.find(x=>x.id===b.dataset.m);send(b.textContent.replace(/^\S+\s/,''),m);});
- $('#story').onclick=async()=>{for(const h of STORY_DAVID)await push(h);};
+ $('#story').onclick=async()=>{try{for(const h of STORY_DAVID)await push(h);}catch(e){console.warn(e);bitnaExpr('flustered');$('#bstat').textContent='앗, 이야기를 불러오다 문제가 생겼어…';}};
  $('#clr').onclick=()=>{LS.set('h_group',[]);home();};}
+// ---- 빛나 생동감: 표정·눈 깜빡임·말하기 ----
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;const BT={expr:'smile',talking:false,blinks:0,timer:null};window.__bitna=BT;
+['base','smile','worry','talk','flustered','empathy','blink'].forEach(e=>{const i=new Image();i.src=`images/host-${e}.webp`;});
+const bsrc=e=>{const b=$('#bimg');if(b)b.src=`images/host-${e}.webp`;};
+function bitnaExpr(e){BT.expr=e;if(!BT.talking)bsrc(e);}
+function bitnaStart(){clearTimeout(BT.timer);BT.expr='smile';if(RM)return;const loop=()=>{BT.timer=setTimeout(()=>{if(!$('#bimg'))return;if(!BT.talking){bsrc('blink');BT.blinks++;setTimeout(()=>{if(!BT.talking)bsrc(BT.expr);},150);}loop();},3000+Math.random()*3000);};loop();}
+async function bitnaTalk(t){const st=$('#bstat');if(st)st.innerHTML='<span class="typing"><i></i><i></i><i></i></span>';const ms=Math.min(1400,300+t.length*18);
+ if(RM||!$('#bimg')){await new Promise(r=>setTimeout(r,200));if(st)st.textContent=t.slice(0,60);return;}
+ BT.talking=true;$('.bwrap')?.classList.add('talking');let f=0;const iv=setInterval(()=>bsrc(++f%2?'talk':'base'),140);
+ await new Promise(r=>setTimeout(r,ms));clearInterval(iv);BT.talking=false;$('.bwrap')?.classList.remove('talking');bsrc(BT.expr);if(st)st.textContent=t.length>60?t.slice(0,60)+'…':t;}
 async function gMsg(h,scroll=true){const M=$('#msgs');if(!M)return;const w=document.createElement('div');w.className='g '+(h.who==='u'?'gu':'');
  if(h.who!=='u')w.innerHTML=(h.who==='jesus'?'<div class="ph av">✝</div>':pic(h.who,h.e||'smile','av',nameOf(h.who)))+`<div class="gb"><div class="gn">${esc(nameOf(h.who))}</div><div class="m c"></div></div>`;
  else w.innerHTML='<div class="m u"></div>';M.appendChild(w);const d=w.querySelector('.m');d.textContent=h.t;
