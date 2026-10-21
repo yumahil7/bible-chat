@@ -34,5 +34,5 @@ async function alertBanner(el){const dis=LS.get('alert_dismiss',[]);let list;try
  <div class="ab" id="ab" hidden><p class="note">${esc(a.source)} 공식 정보 기준 · ${new Date(a.date).toLocaleDateString('ko-KR')} · <a href="${esc(a.url)}" target="_blank" rel="noopener">자세히</a></p>
  ${v?verseCard(v):''}<p class="pray">🙏 ${pray}</p>
  ${list.length>1?`<details><summary class="note">다른 기도 제목 ${list.length-1}건</summary>${list.slice(1,6).map(x=>`<div class="note">· ${esc(x.title)} (${esc(x.source)})</div>`).join('')}</details>`:''}
- <button class="btn" id="adis">이 알림 닫기</button></div></div>`;
+ <a class="btn g" href="#help">🤝 함께 돕기</a> <button class="btn" id="adis">이 알림 닫기</button></div></div>`;
  $('#ah').onclick=()=>{$('#ab').hidden=!$('#ab').hidden;};$('#adis').onclick=()=>{dis.push(a.id);LS.set('alert_dismiss',dis);el.innerHTML='';};}

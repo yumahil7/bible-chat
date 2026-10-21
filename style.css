@@ -28,3 +28,4 @@ main{padding:12px 12px 90px}nav{position:fixed;bottom:0;left:50%;transform:trans
 @keyframes dot{0%,100%{opacity:.3}50%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.bwrap,.bwrap.talking,.shine,.typing i{animation:none!important}}
 .alertb{background:#eef4ff;border:1px solid #c9d8f5;border-radius:12px;padding:8px 12px;margin-bottom:8px;font-size:14px}.ah{cursor:pointer}.pray{line-height:1.6;font-size:14px;background:#fff;border-radius:10px;padding:8px}
+.org{margin:10px 0;padding-top:8px;border-top:1px solid #eee}.dl{display:block;margin:6px 0;padding:9px 12px;background:#f4f1fb;border-radius:10px;color:#2b2350;text-decoration:none;font-size:14px}a.btn{text-decoration:none}

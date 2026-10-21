@@ -89,7 +89,7 @@ async function reply(t,hist){const c=llm();if(!c||cur.id==='jesus')return demoRe
 
 function settings(){const c=LS.get('llm',{}),tr=LS.get('tr','krv');
  sheet(`<h3>설정</h3><p>번역본 <select id="tr"><option value="krv">개역한글</option><option value="kjv">KJV (English)</option></select></p>
- <h4>성경 본문 저작권</h4>${attrAll}<p class="note">개역한글 데이터: github.com/thiagobodruk/bible (ko_krv.json), 대한성서공회 개역한글 본문과 주요 구절 대조 확인.</p>
+ <p><a href="#help" onclick="closeSheet()">🤝 함께 돕기 (공식 후원 페이지)</a></p><h4>성경 본문 저작권</h4>${attrAll}<p class="note">개역한글 데이터: github.com/thiagobodruk/bible (ko_krv.json), 대한성서공회 개역한글 본문과 주요 구절 대조 확인.</p>
  <h4>AI 모드 (선택)</h4><p class="note">비워 두면 오프라인 데모 모드. OpenAI 호환 /chat/completions 엔드포인트. ⚠ 프로토타입은 키를 브라우저에 저장합니다 — 실서비스는 서버에서 호출해야 합니다.</p>
  <input id="u" placeholder="https://api.openai.com/v1/chat/completions" value="${esc(c.url||'')}" style="width:100%;margin:3px 0"><input id="m" placeholder="모델명" value="${esc(c.model||'')}" style="width:100%;margin:3px 0"><input id="k" type="password" placeholder="API 키" value="${esc(c.key||'')}" style="width:100%;margin:3px 0">
  <button class="btn g" id="ok">저장</button><button class="btn" id="rs">대화기록 초기화</button><button class="btn" onclick="closeSheet()">닫기</button>`);
@@ -101,7 +101,7 @@ const nameOf=id=>id==='host'?HOST.name:id==='jesus'?'예수님':id==='u'?'나':(
 function matchMood(t){let best=null,bs=0;for(const m of MOODS){const sc=m.k.filter(k=>t.includes(k)).length;if(sc>bs){bs=sc;best=m;}}return best;}
 async function home(){title('말씀톡 · 빛나와 함께');cur=null;const d=await daily();
  V.innerHTML=`<div id="alertbox"></div><div class="bitna"><div class="bwrap"><img id="bimg" src="images/host-smile.webp" alt="빛나"><div class="shine"></div></div><div class="btxt"><b>빛나</b> <span class="note">${HOST.intro}</span><div class="bsay" id="bstat">지금 마음이 어때? 한 줄로 적어 줘 🙂</div></div></div>
- <div class="chips" id="moods">${MOODS.map(m=>`<button data-m="${m.id}">${m.label}</button>`).join('')}<button id="story">🎬 이야기 극장: 다윗과 골리앗</button><button id="clr">🧹 새 대화</button></div>
+ <div class="chips" id="moods">${MOODS.map(m=>`<button data-m="${m.id}">${m.label}</button>`).join('')}<button id="story">🎬 이야기 극장: 다윗과 골리앗</button><button id="clr">🧹 새 대화</button><button onclick="go('help')">🤝 함께 돕기</button></div>
  <div class="msgs" id="msgs"></div>${d.html}${disc()}
  <div class="inp"><input id="q" placeholder="예: 요즘 너무 지쳤어요"><button id="sd">보내기</button></div>`;d.bind();
  bitnaStart();alertBanner($('#alertbox'));const hist=LS.get('h_group',[]);if(!hist.length)hist.push({who:'host',e:'smile',t:'안녕! 나는 빛나야 🙂 오늘 하루는 어땠어? 지금 마음을 편하게 적어 줘. 위의 버튼을 눌러도 돼.'});
@@ -135,6 +135,6 @@ async function gMsg(h,scroll=true){const M=$('#msgs');if(!M)return;const w=docum
  if(scroll)w.scrollIntoView({block:'end'});}
 
 window.go=(v,a)=>{location.hash=v+(a?'/'+a:'');};
-function route(){closeSheet();const[v,a]=(location.hash.slice(1)||'home').split('/');window.scrollTo(0,0);({home,chars,saved,premium,chat:()=>chat(a)}[v]||home)();}
+function route(){closeSheet();const[v,a]=(location.hash.slice(1)||'home').split('/');window.scrollTo(0,0);({home,chars,saved,premium,help:()=>{title('함께 돕기');V.innerHTML=donateHTML(false)+disc();},chat:()=>chat(a)}[v]||home)();}
 (async()=>{BOOKS=await (await fetch('data/books.json')).json();BOOKS.forEach(b=>SH[b.sh]=b.i);window.addEventListener('hashchange',route);route();
  if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});})();
