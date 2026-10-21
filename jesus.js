@@ -24,6 +24,7 @@ function cameoWho(ref){const p=parseRef(ref);if(!p)return null;const b=p.b,c=p.c
  if(b===17)return R("job","고난 속에서 드린 제 고백이에요.");
  if(b===18)return R("david-king","시편의 노래예요. 저도 이렇게 노래했어요.");
  if(b>=19&&b<=21)return R("solomon","지혜의 말씀이오.");
+ if(b===22)return c===53?R("isaiah","오실 메시아, 고난받는 종의 이야기예요."):R("isaiah","제가 전한 위로와 소망의 말씀이에요.");
  if(b===26)return R("daniel","바벨론에서의 이야기예요.");
  if(b===31)return R("jonah","제가 도망쳤다 돌아온 이야기예요.");
  if(b===39)return R("matthew","제가 기록한 마태복음이에요.");
